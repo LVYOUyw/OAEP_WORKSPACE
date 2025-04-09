@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "crypto.h": "c",
+        "*.tcc": "c"
+    }
+}
