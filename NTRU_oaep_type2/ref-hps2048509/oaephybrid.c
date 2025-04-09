@@ -7,9 +7,10 @@
 #include "params.h"
 #include "randombytes.h"
 #include "sample.h"
+#include "aes128gcm.h"
 
 #include <string.h>
-#include "aes128gcm.h"
+
 
 
 #define OAEP_EMBEDDED_PT_BYTES (NTRU_PACK_TRINARY_BYTES-1)
@@ -104,8 +105,6 @@ int crypto_pkem_dec(unsigned char *m, unsigned char *k, const unsigned char *c, 
 int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, const unsigned char *pk)
 {
   unsigned char k[32];
-  unsigned char iv[12];
-  unsigned char tag[16];
   unsigned char embedded_m[NTRU_PACK_TRINARY_BYTES];
   int clen=0;
   memset(embedded_m, 0, NTRU_PACK_TRINARY_BYTES);
@@ -122,8 +121,8 @@ int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, con
     crypto_pkem_enc(c,k,embedded_m,pk);
 
     /*Temporarily choosing randomly for evaluation*/
-    randombytes(c + NTRU_CIPHERTEXTBYTES,12);
-    aes_gcm_encrypt(c + NTRU_CIPHERTEXTBYTES + 12 + 16,c + NTRU_CIPHERTEXTBYTES + 12, &clen, k, iv, m+OAEP_EMBEDDED_PT_BYTES, l-OAEP_EMBEDDED_PT_BYTES);
+    randombytes(c + NTRU_CIPHERTEXTBYTES, GCM_IV_BYTES);
+    aes_gcm_encrypt(c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES, &clen, k, c + NTRU_CIPHERTEXTBYTES, m+OAEP_EMBEDDED_PT_BYTES, l-OAEP_EMBEDDED_PT_BYTES);
   
   }
   
@@ -131,7 +130,23 @@ int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, con
 }
 
 
-int crypto_hybrid_dec(unsigned char *m, const unsigned char *c, const unsigned char *sk)
+int crypto_hybrid_dec(unsigned char *m, const unsigned char *c, const int cl, const unsigned char *sk)
 {
+  unsigned char k[32];
+
+  unsigned char embedded_m[NTRU_PACK_TRINARY_BYTES];
+  int symmlen=0;
+  memset(embedded_m, 0, NTRU_PACK_TRINARY_BYTES);
+
+  if (cl == NTRU_CIPHERTEXTBYTES)
+  {
+    
+  } else {
+    // assert(cl > NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16);
+    crypto_pkem_dec(m,k,c,sk);
+
+    return aes_gcm_decrypt(m + OAEP_EMBEDDED_PT_BYTES, &symmlen, k, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16, cl - NTRU_CIPHERTEXTBYTES - GCM_IV_BYTES - 16, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES, c + NTRU_CIPHERTEXTBYTES);
+  }
+
 
 }

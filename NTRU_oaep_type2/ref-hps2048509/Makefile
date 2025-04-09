@@ -19,6 +19,8 @@ SRC = cmov.c \
       poly_r2_inv.c \
       poly_rq_mul.c \
       poly_s3_inv.c \
+      aes128gcm.c \
+      oaephybrid.c \
       sample.c \
       sample_iid.c
 
@@ -29,6 +31,8 @@ HDR = cmov.h \
       owcpa.h \
       params.h \
       poly.h \
+      aes128gcm.h \
+      oaephybrid.h \
       sample.h
 
 SRC_URAND = $(SRC) randombytes.c
@@ -37,7 +41,7 @@ HDR_URAND = $(HDR) randombytes.h
 all: test/oaep
 
 test/oaep: $(SRC_URAND) $(HDR_URAND) test/oaep.c
-	$(CC) $(CFLAGS) -o $@ $(SRC_URAND) test/oaep.c 
+	$(CC) $(CFLAGS) -o $@ $(SRC_URAND) test/oaep.c $(LDFLAGS)
 
 .PHONY: clean test
 

@@ -12,14 +12,16 @@
  * demonstration program.
  */
 
+ 
+ #include "aes128gcm.h"
+
  #include <stdio.h>
  #include <openssl/err.h>
  #include <openssl/bio.h>
  #include <openssl/evp.h>
  #include <openssl/core_names.h>
- 
+ #include <string.h>
 
- #include "aes128gcm.h"
  /* AES-GCM test data obtained from NIST public test vectors */
  
  /* AES key */
@@ -69,14 +71,14 @@
  static OSSL_LIB_CTX *libctx = NULL;
  static const char *propq = NULL;
  
- static int aes_gcm_encrypt(unsigned char *outbuf, unsigned char *outtag, int *outlen, const unsigned char *k, const unsigned char *iv, const unsigned char *m, const int m_size)
+int aes_gcm_encrypt(unsigned char *outbuf, unsigned char *outtag, int *outlen, const unsigned char *k, const unsigned char *iv, const unsigned char *m, const int m_size)
  {
      int ret = 0;
      EVP_CIPHER_CTX *ctx;
      EVP_CIPHER *cipher = NULL;
      int tmplen;
      *outlen=0;
-     size_t iv_size = 12;
+     size_t iv_size = GCM_IV_BYTES;
     //  size_t gcm_ivlen = iv_size;
     //  unsigned char outbuf[1024];
     //  unsigned char outtag[16];
@@ -148,12 +150,13 @@
      return ret;
  }
  
- static int aes_gcm_decrypt(unsigned char *m, int *m_size, const unsigned char *k, const unsigned char *ct, const int ct_size, const unsigned char *tag, const unsigned char *iv, const size_t iv_size)
+int aes_gcm_decrypt(unsigned char *m, int *m_size, const unsigned char *k, const unsigned char *ct, const int ct_size, const unsigned char *tag, const unsigned char *iv)
  {
      int ret = 0;
      EVP_CIPHER_CTX *ctx;
      EVP_CIPHER *cipher = NULL;
      int outlen,mlenTmp;
+     size_t iv_size = GCM_IV_BYTES;
     //  size_t gcm_ivlen = iv_size;
 
     unsigned char *outbuf = malloc(ct_size);
