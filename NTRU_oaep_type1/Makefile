@@ -6,21 +6,29 @@ RM = /bin/rm
 
 LDFLAGS=-lcrypto
 
-SOURCES= pke.c poly.c ntt.c sha2.c symmetric.c reduce.c verify.c fips202.c
-HEADERS= params.h pke.h poly.h ntt.h sha2.h symmetric.h reduce.h verify.h fips202.h
+SOURCES= pke.c poly.c ntt.c sha2.c symmetric.c reduce.c verify.c fips202.c aes128gcm.c oaephybrid.c
+HEADERS= params.h pke.h poly.h ntt.h sha2.h symmetric.h reduce.h verify.h fips202.h aes128gcm.h oaephybrid.h
 
 .PHONY: all PQCgenKAT_encrypt test clean
 
 all: \
 	test \
-	PQCgenKAT_encrypt
+	PQCgenKAT_encrypt \
+	hybridtest
 
 PQCgenKAT_encrypt: $(HEADERS) rng.h $(SOURCES) PQCgenKAT_encrypt.c rng.c 
 	$(CC) $(NISTFLAGS) -o $@ PQCgenKAT_encrypt.c rng.c $(SOURCES) $(LDFLAGS)
 
 test: $(HEADERS) randombytes.h $(SOURCES) randombytes.c test.c
-	$(CC) $(CFLAGS) -o $@ randombytes.c test.c $(SOURCES)
+	$(CC) $(CFLAGS) -o $@ randombytes.c test.c $(SOURCES) $(LDFLAGS)
+
+hybridtest: $(HEADERS) randombytes.h $(SOURCES) randombytes.c hybridtest.c
+	$(CC) $(CFLAGS) -o $@ randombytes.c hybridtest.c $(SOURCES) $(LDFLAGS)
+
+
+
 
 clean:
 	-$(RM) PQCgenKAT_encrypt
 	-$(RM) test
+	-$(RM) hybridtest

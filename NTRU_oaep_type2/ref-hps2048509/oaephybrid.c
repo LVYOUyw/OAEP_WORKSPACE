@@ -8,12 +8,49 @@
 #include "randombytes.h"
 #include "sample.h"
 #include "aes128gcm.h"
+#include <stdio.h>
 
 #include <string.h>
 
 
 
-#define OAEP_EMBEDDED_PT_BYTES (NTRU_PACK_TRINARY_BYTES-1)
+int b128encode(unsigned char *outs,const unsigned char *ins, const int l)
+{
+
+  if (l%7!=0) return 0; 
+  for (size_t i = 0; 7 * i < l; i++)
+  {
+    outs[i * 8 + 0] = ins[7 * i] & 0x7f;  
+    outs[i * 8 + 1] = (ins[7 * i]     >> 7) | ((ins[7 * i + 1] & 0x3f) <<1);
+    outs[i * 8 + 2] = (ins[7 * i + 1] >> 6) | ((ins[7 * i + 2] & 0x1f) <<2);
+    outs[i * 8 + 3] = (ins[7 * i + 2] >> 5) | ((ins[7 * i + 3] & 0x0f) <<3);
+    outs[i * 8 + 4] = (ins[7 * i + 3] >> 4) | ((ins[7 * i + 4] & 0x07) <<4);
+    outs[i * 8 + 5] = (ins[7 * i + 4] >> 3) | ((ins[7 * i + 5] & 0x03) <<5);
+    outs[i * 8 + 6] = (ins[7 * i + 5] >> 2) | ((ins[7 * i + 6] & 0x01) <<6);
+    outs[i * 8 + 7] =  ins[7 * i + 6] >> 1;
+  }
+  return 1;
+
+}
+
+
+int b128decode(unsigned char *outs,const unsigned char *ins, const int l)
+{
+
+  if (l%8!=0) return 0; 
+  for (size_t i = 0; 8 * i < l; i++)
+  {
+    outs[i * 7 + 0] = ins[8 * i]     | ((ins[8 * i + 1] & 0x01) << 7);
+    outs[i * 7 + 1] = (ins[8 * i + 1] >> 1) | ((ins[8 * i + 2] & 0x03) << 6);
+    outs[i * 7 + 2] = (ins[8 * i + 2] >> 2) | ((ins[8 * i + 3] & 0x07) << 5);
+    outs[i * 7 + 3] = (ins[8 * i + 3] >> 3) | ((ins[8 * i + 4] & 0x0f) << 4);
+    outs[i * 7 + 4] = (ins[8 * i + 4] >> 4) | ((ins[8 * i + 5] & 0x1f) << 3);
+    outs[i * 7 + 5] = (ins[8 * i + 5] >> 5) | ((ins[8 * i + 6] & 0x3f) << 2);
+    outs[i * 7 + 6] = (ins[8 * i + 6] >> 6) | ((ins[8 * i + 7] & 0x7f) << 1);
+  }
+  return 1;
+  
+}
 
 int crypto_pkem_enc(unsigned char *c, unsigned char *k, const unsigned char *m, const unsigned char *pk)
 {
@@ -112,13 +149,22 @@ int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, con
   if ( l<= OAEP_EMBEDDED_PT_BYTES)
   {
     /* code */
-    memcpy(embedded_m, m, l);
+    b128encode(embedded_m,m,OAEP_EMBEDDED_PT_BYTES);
+
+
+    
     /** TODO: Implement with plain oaep-pke*/
   } else {
     
-    memcpy(embedded_m,m,OAEP_EMBEDDED_PT_BYTES);
-    /*TODO: change k into 128 bits*/
+    b128encode(embedded_m,m,OAEP_EMBEDDED_PT_BYTES);
+
+    /** TODO: change k into 128 bits*/
+
+
     crypto_pkem_enc(c,k,embedded_m,pk);
+
+
+    
 
     /*Temporarily choosing randomly for evaluation*/
     randombytes(c + NTRU_CIPHERTEXTBYTES, GCM_IV_BYTES);
@@ -136,17 +182,21 @@ int crypto_hybrid_dec(unsigned char *m, const unsigned char *c, const int cl, co
 
   unsigned char embedded_m[NTRU_PACK_TRINARY_BYTES];
   int symmlen=0;
+  int fail=0;
   memset(embedded_m, 0, NTRU_PACK_TRINARY_BYTES);
 
   if (cl == NTRU_CIPHERTEXTBYTES)
   {
-    
+    /** TODO: */
   } else {
     // assert(cl > NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16);
-    crypto_pkem_dec(m,k,c,sk);
+    fail = crypto_pkem_dec(embedded_m,k,c,sk);
+    b128decode(m,embedded_m,OAEP_EMBEDDED_BYTES);
 
-    return aes_gcm_decrypt(m + OAEP_EMBEDDED_PT_BYTES, &symmlen, k, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16, cl - NTRU_CIPHERTEXTBYTES - GCM_IV_BYTES - 16, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES, c + NTRU_CIPHERTEXTBYTES);
+    if (fail!=0)
+    {
+      return 0;
+    }
+    else return aes_gcm_decrypt(m + OAEP_EMBEDDED_PT_BYTES, &symmlen, k, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES + 16, cl - NTRU_CIPHERTEXTBYTES - GCM_IV_BYTES - 16, c + NTRU_CIPHERTEXTBYTES + GCM_IV_BYTES, c + NTRU_CIPHERTEXTBYTES);
   }
-
-
 }

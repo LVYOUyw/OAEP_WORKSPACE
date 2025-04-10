@@ -95,6 +95,7 @@ int test_speed()
     for (size_t T = 0; T < SPEED_LOOP; T++)
     {
         crypto_kem_keypair(pk,sk);
+
         cycles1 = cpucycles();
         crypto_kem_enc(c,m,pk);
         cycles2 = cpucycles();
@@ -111,8 +112,8 @@ int test_speed()
 	printf("  ENC    runs in ................. %8lld cycles", ecycles/SPEED_LOOP);
 	printf("\n"); 
 	
-	printf("  DEC    runs in ................. %8lld cycles", dcycles/SPEED_LOOP);
-	printf("\n\n"); 
+ 	printf("  DEC    runs in ................. %8lld cycles", dcycles/SPEED_LOOP);
+	printf("\n\n");
 
     free(pk);free(sk);
     free(c);free(m);free(decm);

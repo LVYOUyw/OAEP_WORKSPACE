@@ -3,7 +3,8 @@
 #define NTRUOAEPKEM_H
 
 #include "params.h"
-
+#define OAEP_EMBEDDED_PT_BYTES 84
+#define OAEP_EMBEDDED_BYTES (OAEP_EMBEDDED_PT_BYTES / 7) * 8
 
 #define crypto_pkem_enc CRYPTO_NAMESPACE(oaeppkemenc)
 int crypto_pkem_enc(unsigned char *c, unsigned char *k, const unsigned char *m, const unsigned char *pk);

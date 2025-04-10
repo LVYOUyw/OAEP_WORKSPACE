@@ -71,6 +71,175 @@
  static const char *propq = NULL;
  
 
+ static int aes_gcm_encrypt(unsigned char *outbuf, unsigned char *outtag, int *outlen, const unsigned char *k, const unsigned char *iv, const unsigned char *m, const int m_size)
+ {
+     int ret = 0;
+     EVP_CIPHER_CTX *ctx;
+     EVP_CIPHER *cipher = NULL;
+     int tmplen;
+     *outlen=0;
+     size_t iv_size = 12;
+    //  size_t gcm_ivlen = iv_size;
+    //  unsigned char outbuf[1024];
+    //  unsigned char outtag[16];
+     OSSL_PARAM params[2] = {
+         OSSL_PARAM_END, OSSL_PARAM_END
+     };
+ 
+    //  printf("AES GCM Encrypt:\n");
+    //  printf("Plaintext:\n");
+    //  BIO_dump_fp(stdout, gcm_pt, m_size);
+ 
+     /* Create a context for the encrypt operation */
+     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+         goto err;
+ 
+     /* Fetch the cipher implementation */
+     if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+         goto err;
+ 
+     /* Set IV length if default 96 bits is not appropriate */
+     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
+                                             &iv_size);
+ 
+     /*
+      * Initialise an encrypt operation with the cipher/mode, key, IV and
+      * IV length parameter.
+      * For demonstration purposes the IV is being set here. In a compliant
+      * application the IV would be generated internally so the iv passed in
+      * would be NULL.
+      */
+     if (!EVP_EncryptInit_ex2(ctx, cipher, k, iv, params))
+         goto err;
+ 
+    /* No AAD in our test */
+    //  if (!EVP_EncryptUpdate(ctx, NULL, &outlen, gcm_aad, sizeof(gcm_aad)))
+    //      goto err;
+ 
+     /* Encrypt plaintext */
+     if (!EVP_EncryptUpdate(ctx, outbuf, outlen, m, m_size))
+         goto err;
+ 
+    //  /* Output encrypted block */
+    //  printf("Ciphertext:\n");
+    //  BIO_dump_fp(stdout, outbuf, outlen);
+ 
+     /* Finalise: note get no output for GCM */
+     if (!EVP_EncryptFinal_ex(ctx, outbuf, &tmplen))
+         goto err;
+ 
+     /* Get tag */
+     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, outtag, 16);
+
+
+ 
+     if (!EVP_CIPHER_CTX_get_params(ctx, params))
+         goto err;
+
+    puts("tag when encrypting:");
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%02x",outtag[i]);
+    }
+    puts("");
+ 
+    //  /* Output tag */
+    //  printf("Tag:\n");
+    //  BIO_dump_fp(stdout, outtag, 16);
+ 
+     ret = 1;
+ err:
+     if (!ret)
+         ERR_print_errors_fp(stderr);
+ 
+     EVP_CIPHER_free(cipher);
+     EVP_CIPHER_CTX_free(ctx);
+ 
+     return ret;
+ }
+ 
+ static int aes_gcm_decrypt(unsigned char *m, int *m_size, const unsigned char *k, const unsigned char *ct, const int ct_size, const unsigned char *tag, const unsigned char *iv, const size_t iv_size)
+ {
+     int ret = 0;
+     EVP_CIPHER_CTX *ctx;
+     EVP_CIPHER *cipher = NULL;
+     int outlen,mlenTmp;
+    //  size_t gcm_ivlen = iv_size;
+
+    unsigned char *outbuf = malloc(ct_size);
+    memset(outbuf,0,sizeof(outbuf));
+
+     OSSL_PARAM params[2] = {
+         OSSL_PARAM_END, OSSL_PARAM_END
+     };
+ 
+ 
+     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+         goto err;
+ 
+     /* Fetch the cipher implementation */
+     if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+         goto err;
+ 
+     /* Set IV length if default 96 bits is not appropriate */
+     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_IVLEN,
+                                             &iv_size);
+ 
+     /*
+      * Initialise an encrypt operation with the cipher/mode, key, IV and
+      * IV length parameter.
+      */
+     if (!EVP_DecryptInit_ex2(ctx, cipher, k, iv, params))
+         goto err;
+ 
+     /* Zero or more calls to specify any AAD */
+    //  if (!EVP_DecryptUpdate(ctx, NULL, &outlen, gcm_aad, sizeof(gcm_aad)))
+    //      goto err;
+ 
+     /* Decrypt plaintext */
+     printf("ct_size:%d\n",ct_size);
+     if (!EVP_DecryptUpdate(ctx, outbuf, &mlenTmp, ct, ct_size))
+         goto err;
+ 
+     /* Set expected tag value. */
+
+     puts("tag when decrypting:");
+     for (size_t i = 0; i < 16; i++)
+     {
+         printf("%02x",tag[i]);
+     }
+     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, (void*)tag, 16);
+ 
+
+    puts("");
+
+     if (!EVP_CIPHER_CTX_set_params(ctx, params))
+         goto err;
+ 
+     /* Finalise: note get no output for GCM */
+     /*
+      * Print out return value. If this is not successful authentication
+      * failed and plaintext is not trustworthy.
+      */
+    //  printf("Tag Verify %s\n", rv > 0 ? "Successful!" : "Failed!");
+    // printf("!!%d!!\n",);
+     if (EVP_DecryptFinal_ex(ctx, outbuf, &outlen) > 0)
+     {
+        memcpy(m,outbuf,mlenTmp);
+        *m_size = mlenTmp;
+        ret = 1;
+     }
+
+ err:
+     if (!ret)
+         ERR_print_errors_fp(stderr);
+ 
+     EVP_CIPHER_free(cipher);
+     EVP_CIPHER_CTX_free(ctx);
+    free(outbuf);
+ 
+     return ret;
+ }
  
  static const unsigned char gcm_key[] = {
     0xee, 0xbc, 0x1f, 0x57, 0x48, 0x7f, 0x51, 0x92, 0x1c, 0x04, 0x65, 0x66,
@@ -96,7 +265,7 @@ static const unsigned char gcm_iv[] = {
         printf("0x%02x,", pt[i]);
     }
     puts("\npt ends");
-    aes_gcm_encrypt(ct,ctag,&clen,gcm_key,gcm_iv,12,pt,499);
+    aes_gcm_encrypt(ct,ctag,&clen,gcm_key,gcm_iv,pt,499);
     for (size_t i = 0; i < clen; i++)
     {
         printf("0x%02x,", ct[i]);
@@ -106,6 +275,13 @@ static const unsigned char gcm_iv[] = {
 
     unsigned char decPt[2000];
     int dmlen;
+
+    puts("tag in the middle:");
+    for (size_t i = 0; i < 16; i++)
+    {
+        printf("%02x",ctag[i]);
+    }
+    puts("");
 
     aes_gcm_decrypt(decPt,&dmlen,gcm_key,ct,clen,ctag,gcm_iv,12);
     puts("");

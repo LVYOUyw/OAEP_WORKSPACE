@@ -3,6 +3,13 @@
         "stdint.h": "c",
         "crypto.h": "c",
         "*.tcc": "c",
-        "core_names.h": "c"
+        "core_names.h": "c",
+        "params.h": "c",
+        "cstdint": "c",
+        "symmetric.h": "c",
+        "oaephybrid.h": "c",
+        "randombytes.h": "c",
+        "aes128gcm.h": "c",
+        "cerrno": "c"
     }
 }

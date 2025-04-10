@@ -33,7 +33,7 @@ static inline uint64_t cpucycles(void)
 int test_correctness()
 {
 
-    const int m_size = 500;
+    const int m_size = 1000;
 
     unsigned char* pk = (unsigned char*) malloc(CRYPTO_PUBLICKEYBYTES);
     unsigned char* sk = (unsigned char*) malloc(CRYPTO_OAEP_SKBYTES);
@@ -55,11 +55,11 @@ int test_correctness()
         
     
         crypto_kem_keypair(pk,sk);
-        crypto_kem_enc(c,m,pk);
+        // crypto_kem_enc(c,m,pk);
         crypto_hybrid_enc(c,m,m_size,pk);
-        int fail = crypto_hybrid_dec(decm,c, CRYPRO_OAEP_CTBYTES + m_size + GCM_IV_BYTES + GCM_TAG_BYTES, sk)==1?0:1;
+        int fail = crypto_hybrid_dec(decm,c, CRYPRO_OAEP_CTBYTES + m_size + GCM_IV_BYTES + GCM_TAG_BYTES - OAEP_EMBEDDED_PT_BYTES, sk)==1?0:1;
         
-        fail |= (int)(memcmp(m,decm,NTRU_PACK_TRINARY_BYTES));
+        fail |= (int)(memcmp(m,decm,m_size));
         fail_count += fail?1:0;
 
     }
@@ -70,7 +70,7 @@ int test_correctness()
     printf("====== ERROR COUNT : % 6d ======\n",fail_count);
     return fail_count;
 }
-}
+
 
 int test_speed()
 {

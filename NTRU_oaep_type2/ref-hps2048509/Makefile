@@ -38,10 +38,13 @@ HDR = cmov.h \
 SRC_URAND = $(SRC) randombytes.c
 HDR_URAND = $(HDR) randombytes.h
 
-all: test/oaep
+all: test/oaep test/oaephyb
 
 test/oaep: $(SRC_URAND) $(HDR_URAND) test/oaep.c
 	$(CC) $(CFLAGS) -o $@ $(SRC_URAND) test/oaep.c $(LDFLAGS)
+
+test/oaephyb: $(SRC_URAND) $(HDR_URAND) test/oaephyb.c
+	$(CC) $(CFLAGS) -o $@ $(SRC_URAND) test/oaephyb.c $(LDFLAGS)
 
 .PHONY: clean test
 
@@ -54,3 +57,4 @@ test: all
 clean::
 	-$(RM) *.o
 	-$(RM) -r test/oaep
+	-$(RM) -r test/oaephyb      

@@ -86,6 +86,8 @@ int aes_gcm_encrypt(unsigned char *outbuf, unsigned char *outtag, int *outlen, c
          OSSL_PARAM_END, OSSL_PARAM_END
      };
  
+
+
     //  printf("AES GCM Encrypt:\n");
     //  printf("Plaintext:\n");
     //  BIO_dump_fp(stdout, gcm_pt, m_size);
@@ -137,6 +139,7 @@ int aes_gcm_encrypt(unsigned char *outbuf, unsigned char *outtag, int *outlen, c
     if (!EVP_CIPHER_CTX_get_params(ctx, params))
         goto err;
 
+
     // puts("outtag when encrypting:");
     // for (size_t i = 0; i < 16; i++)
     // {
@@ -171,6 +174,8 @@ int aes_gcm_decrypt(unsigned char *m, int *m_size, const unsigned char *k, const
 
     unsigned char *outbuf = malloc(ct_size);
     memset(outbuf,0,sizeof(outbuf));
+
+
 
      OSSL_PARAM params[2] = {
          OSSL_PARAM_END, OSSL_PARAM_END
