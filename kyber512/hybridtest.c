@@ -12,7 +12,7 @@
 #define TEST_LOOP1 1
 #define TEST_LOOP2 100000
 
-#define TEST_MSIZE 1000
+#define TEST_MSIZE 128
 
 
 
@@ -73,6 +73,7 @@ static void TEST_PKE_CLOCK()
 	unsigned char sk[CRYPTO_SECRETKEYBYTES];
 	unsigned char ct[TEST_MSIZE + CRYPTO_CIPHERTEXTBYTES + 128];
 	unsigned char m[TEST_MSIZE];
+	unsigned char ss[CRYPTO_BYTES];
 	unsigned char dm[TEST_MSIZE];
 	//unsigned long long mlen = 0;
 	//unsigned long long dmlen = 0;
@@ -95,7 +96,7 @@ static void TEST_PKE_CLOCK()
 
 	for (int i = 0; i < TEST_LOOP2; i++)
 	{		
-        crypto_kem_keypair(pk,sk);
+        //crypto_kem_keypair(pk,sk);
 
         cycles1 = cpucycles();
         crypto_hybrid_enc(ct,m,TEST_MSIZE,pk);
@@ -109,12 +110,34 @@ static void TEST_PKE_CLOCK()
         dcycles += cycles2-cycles1;
 	}
 
-    printf("  ENC    runs in ................. %8lld cycles", ecycles/TEST_LOOP2);
+    printf(" HYBRID ENC    runs in ................. %8lld cycles", ecycles/TEST_LOOP2);
 	printf("\n"); 
 	
- 	printf("  DEC    runs in ................. %8lld cycles", dcycles/TEST_LOOP2);
+ 	printf(" HYBRID DEC    runs in ................. %8lld cycles", dcycles/TEST_LOOP2);
 	printf("\n\n");
 
+	ecycles = dcycles = 0;
+
+	for (int i = 0; i < TEST_LOOP2; i++)
+	{		
+       // crypto_kem_keypair(pk,sk);
+
+        cycles1 = cpucycles();
+		crypto_kem_enc(ct,ss,pk);
+        cycles2 = cpucycles();
+        ecycles += cycles2-cycles1;
+
+
+        cycles1 = cpucycles();
+		crypto_kem_dec(ss,ct,sk);
+        cycles2 = cpucycles();
+        dcycles += cycles2-cycles1;
+	}
+    printf(" KEM ENC    runs in ................. %8lld cycles", ecycles/TEST_LOOP2);
+	printf("\n"); 
+	
+ 	printf(" KEM DEC    runs in ................. %8lld cycles", dcycles/TEST_LOOP2);
+	printf("\n\n");
 }
 
 int main(void)
@@ -123,7 +146,7 @@ int main(void)
 	printf("ALGORITHM_NAME  : %s\n", CRYPTO_ALGNAME);
 	printf("PUBLICKEYBYTES  : %d\n", CRYPTO_PUBLICKEYBYTES);
 	printf("SECRETKEYBYTES  : %d\n", CRYPTO_SECRETKEYBYTES);
-	printf("CIPHERTEXTBYTES : %d\n", CRYPTO_CIPHERTEXTBYTES);
+	printf("CIPHERTEXTBYTES : %d\n",  CRYPTO_CIPHERTEXTBYTES + GCM_IV_BYTES + GCM_TAG_BYTES + TEST_MSIZE);
 	printf("\n");
 
 	TEST_PKE();

@@ -90,7 +90,7 @@ int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, con
 
   
   }
-  
+  return 0;
 }
 
 

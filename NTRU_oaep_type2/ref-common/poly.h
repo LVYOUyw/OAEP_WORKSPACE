@@ -22,6 +22,12 @@ void poly_mod_q_Phi_n(poly *r);
 void poly_Sq_tobytes(unsigned char *r, const poly *a);
 void poly_Sq_frombytes(poly *r, const unsigned char *a);
 
+#define poly_S3_fromMessage CRYPTO_NAMESPACE(poly_S3_fromMessage)
+#define poly_S3_toMessage CRYPTO_NAMESPACE(poly_S3_toMessage)
+void poly_S3_toMessage(unsigned char *r, const poly *a);
+void poly_S3_fromMessage(poly *r, const unsigned char *a);
+
+
 #define poly_Rq_sum_zero_tobytes CRYPTO_NAMESPACE(poly_Rq_sum_zero_tobytes)
 #define poly_Rq_sum_zero_frombytes CRYPTO_NAMESPACE(poly_Rq_sum_zero_frombytes)
 void poly_Rq_sum_zero_tobytes(unsigned char *r, const poly *a);
@@ -54,9 +60,4 @@ void poly_S3_inv(poly *r, const poly *a);
 #define poly_trinary_Zq_to_Z3 CRYPTO_NAMESPACE(poly_trinary_Zq_to_Z3)
 void poly_Z3_to_Zq(poly *r);
 void poly_trinary_Zq_to_Z3(poly *r);
-
-
-void poly_S3_tocompressed(unsigned char *c, const poly *a);
-void poly_S3_fromcompressed(unsigned char *c, const poly *a);
-
 #endif

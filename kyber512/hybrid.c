@@ -21,6 +21,7 @@ int crypto_hybrid_enc(unsigned char *c, const unsigned char *m, const int l, con
   randombytes(c + CRYPTO_CIPHERTEXTBYTES, GCM_IV_BYTES);
   aes_gcm_encrypt(c + CRYPTO_CIPHERTEXTBYTES + GCM_IV_BYTES + 16,c + CRYPTO_CIPHERTEXTBYTES + GCM_IV_BYTES,&coutlen,k,c+CRYPTO_CIPHERTEXTBYTES,m,l);
 
+  return 0;
 }
 
 

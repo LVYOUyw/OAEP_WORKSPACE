@@ -6,7 +6,7 @@ project](https://csrc.nist.gov/Projects/Post-Quantum-Cryptography/Round-2-Submis
 Run the following to get the benchmark.
 
 ```
-cd ref-hps2048509
+cd ref-hps2048677
 make test/oaep
 ./test/oaep
 ```

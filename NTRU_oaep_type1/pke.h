@@ -16,4 +16,13 @@ int crypto_encrypt_open(unsigned char *m,
                         const unsigned char *c,
                         const unsigned char *sk);
 
+int crypto_encap(unsigned char *c,
+    unsigned long long *clen,
+    unsigned char *ss,
+    const unsigned char *pk);
+
+int crypto_encap_open(unsigned char *ss,
+    const unsigned char *c,
+    const unsigned char *sk);
+
 #endif
